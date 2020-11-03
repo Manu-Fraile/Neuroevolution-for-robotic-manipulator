@@ -1,1 +1,3 @@
 neat-python
+graphviz
+matplotlib

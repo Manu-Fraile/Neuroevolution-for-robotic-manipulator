@@ -1,3 +1,5 @@
 OldCode/
 venv/
 venvExamples/
+__pycache__/
+results/
