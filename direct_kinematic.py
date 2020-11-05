@@ -88,6 +88,8 @@ def transformM(o, t, s, f, r, e, R1=0.188, R2=1.175, R3=1.3, R4=0.2):  # omega, 
                   [0, sin(e), cos(e), 0],
                   [0, 0, 0, 1]])
 
-    TM = A * B * C * D * E * F * G * H * I * J
+    #On paper there is no J, we need it?
+    TM = A.dot(B).dot(C).dot(D).dot(E).dot(F).dot(G).dot(H).dot(I).dot(J)
+    # * B * C * D * E * F * G * H * I# * J
 
     return TM
