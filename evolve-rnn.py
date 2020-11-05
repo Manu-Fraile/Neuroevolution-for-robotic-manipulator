@@ -16,16 +16,17 @@ import visualize
 #time_const=1
 
 fitnessFunctions = FitnessFunctions()
-trajectory_paper=[[2.25,1.1,0.25],
-                    [0.9,1.5,0.25],
-                    [-0.85,1.14,2.22],
-                    [-1.8,1.25,1.17],
-                    [1.8,1.25,1.17],
-                    [-1.25,-1.1,0.25],
-                    [-2.25,-1.48,0.25],
-                    [0.45,-1.14,2.22],
-                    [0.8,-1.25,2.35],
-                    [0.8,-1.25,-1.35]]
+trajectory_paper = [[2.25, 1.1, 0.25],
+                    [0.9, 1.5, 0.25],
+                    [-0.85, 1.14, 2.22],
+                    [-1.8, 1.25, 1.17],
+                    [1.8, 1.25, 1.17],
+                    [-1.25, -1.1, 0.25],
+                    [-2.25, -1.48, 0.25],
+                    [0.45, -1.14, 2.22],
+                    [0.8, -1.25, 2.35],
+                    [0.8, -1.25, -1.35]]
+
 
 # Use the RN network phenotype
 def eval_genome(genome, config):
@@ -35,7 +36,7 @@ def eval_genome(genome, config):
 
     net = neat.nn.RecurrentNetwork.create(genome, config)
 
-    trajectory_points=trajectory_paper
+    trajectory_points = trajectory_paper
     outputs = []
     for point in trajectory_points:
         outputs.append(net.activate(point))
@@ -43,9 +44,11 @@ def eval_genome(genome, config):
     total_rotation = fitnessFunctions.evaluate_rotations(outputs)
     total_energy = fitnessFunctions.evaluate_energy(outputs)
     total_operation_time = fitnessFunctions.evaluate_operation_time(outputs)
+    total_accuracy = fitnessFunctions.evaluate_position_accuracy(outputs, trajectory_points)
 
-    fitness = 1/total_rotation+1/total_energy+1/total_operation_time
+    fitness = 1/total_rotation+1/total_energy+1/total_operation_time+1/total_accuracy
     return fitness
+
 
 def eval_genomes(genomes, config):
     for genome_id, genome in genomes:
@@ -55,7 +58,7 @@ def eval_genomes(genomes, config):
 def run():
     # Load the config file
     local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, 'config-rnn')
+    config_path = os.path.join(local_dir, 'config-ctrnn')
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
                          config_path)
@@ -71,7 +74,7 @@ def run():
         winner = pop.run(eval_genomes, num_generation)
     else:
         pe = neat.ParallelEvaluator(4, eval_genome)
-        winner = pop.run(pe.evaluate,num_generation)
+        winner = pop.run(pe.evaluate, num_generation)
 
     # Save the winner.
     with open('results/winner-rnn', 'wb') as f:
