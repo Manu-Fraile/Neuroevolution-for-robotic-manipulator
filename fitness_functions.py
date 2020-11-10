@@ -20,6 +20,8 @@ class FitnessFunctions(object):
         for coo in range(0, 10):
             for joint in range(0, 6):
                 tmp=abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+10)%10][joint])
+                if verbose:
+                    print(tmp)
                 all_data[coo]=total_energy+math.degrees(tmp)*self.energy_constants[joint]
         total_energy=np.sum(all_data)
         if verbose:
@@ -80,3 +82,29 @@ class FitnessFunctions(object):
         if verbose:
             return total_accuracy, all_data
         return total_accuracy[0]
+
+if __name__ == '__main__':
+    trajectory_points = [[2.25, 1.1, 0.25],
+                        [0.9, 1.5, 0.25],
+                        [-0.85, 1.14, 2.22],
+                        [-1.8, 1.25, 1.17],
+                        [1.8, 1.25, 1.17],
+                        [-1.25, -1.1, 0.25],
+                        [-2.25, -1.48, 0.25],
+                        [0.45, -1.14, 2.22],
+                        [0.8, -1.25, 2.35],
+                        [0.8, -1.25, -1.35]]
+    outputs =  [[0.473, 0.592, -0.230, 0.130, 0.008,-0.617],
+                            [1.026, 0.293, -0.008, 0.132, 1.155, -0.617],
+                            [2.086, -0.014, -0.270, 2.890, 1.155, -0.617],
+                            [2.523, 0.179, -0.270, 2.890, -0.440, -0.617],
+                            [0.597, 0.179, -0.270, 2.890, -0.440, -0.617],
+                            [-2.417, 0.179, 0.434, 2.887, -0.665, -0.617],
+                            [-2.465, 0.794, -0.459, 1.342, -0.665, -0.617],
+                            [-1.087, -0.189, -0.462, 0.324, -0.665, -0.617],
+                            [-0.966, 1.188, 0.215, 0.130, 0.008, -0.617],
+                            [-0.951, -0.100, -0.462, 0.130, -0.526, -0.617]]
+    fitnessFunctions = FitnessFunctions()
+    total_accuracy, accuracies = fitnessFunctions.evaluate_position_accuracy(outputs, trajectory_points, True)
+    print(total_accuracy)
+    print(accuracies)

@@ -3,3 +3,6 @@ venv/
 venvExamples/
 __pycache__/
 results/
+*.png
+*.csv
+*.xlsx
