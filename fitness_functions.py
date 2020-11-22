@@ -20,8 +20,8 @@ class FitnessFunctions(object):
         for coo in range(0, 10):
             for joint in range(0, 6):
                 tmp=abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+10)%10][joint])
-                if verbose:
-                    print(tmp)
+                #if verbose:
+                #    print(tmp)
                 all_data[coo]=total_energy+math.degrees(tmp)*self.energy_constants[joint]
         total_energy=np.sum(all_data)
         if verbose:
@@ -50,7 +50,8 @@ class FitnessFunctions(object):
         for joint in range(0, 6):
             for coo in range(0, 10):
                 # rotation=|joint_b-joint_a|
-                all_data[coo]=all_data[coo]+total_rotations+abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+10)%10][joint])
+                all_data[coo]=all_data[coo]+abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+10)%10][joint])
+                print(str(array_of_joints_coordinates[coo][joint])+" - "+ str(array_of_joints_coordinates[(coo-1+10)%10][joint])+" = "+ str(abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+10)%10][joint])))
         total_rotations=np.sum(all_data)
         if verbose:
             return total_rotations, all_data
@@ -84,6 +85,10 @@ class FitnessFunctions(object):
         return total_accuracy[0]
 
 if __name__ == '__main__':
+    import os
+    import pickle
+    import pandas as pd
+
     trajectory_points = [[2.25, 1.1, 0.25],
                         [0.9, 1.5, 0.25],
                         [-0.85, 1.14, 2.22],
@@ -102,9 +107,38 @@ if __name__ == '__main__':
                             [-2.417, 0.179, 0.434, 2.887, -0.665, -0.617],
                             [-2.465, 0.794, -0.459, 1.342, -0.665, -0.617],
                             [-1.087, -0.189, -0.462, 0.324, -0.665, -0.617],
-                            [-0.966, 1.188, 0.215, 0.130, 0.008, -0.617],
-                            [-0.951, -0.100, -0.462, 0.130, -0.526, -0.617]]
+                            [-0.951, -0.100, -0.462, 0.130, -0.526, -0.617],
+                            [-0.966, 1.188, 0.215, 0.130, 0.008, -0.617]]
     fitnessFunctions = FitnessFunctions()
     total_accuracy, accuracies = fitnessFunctions.evaluate_position_accuracy(outputs, trajectory_points, True)
     print(total_accuracy)
     print(accuracies)
+
+    fitnesses={"total":[],"rotation_A":[],"energy_E":[],"operation_T":[],"accuracy":[]}
+    data={}
+    verbose=True
+    data["outputs"]=outputs
+    total_rotation, data["rotation_A"] = fitnessFunctions.evaluate_rotations(outputs, verbose)
+    total_energy, data["energy_E"] = fitnessFunctions.evaluate_energy(outputs, verbose)
+    total_operation_time, data["operation_T"] = fitnessFunctions.evaluate_operation_time(outputs, verbose)
+    total_accuracy, data["accuracy"] = fitnessFunctions.evaluate_position_accuracy(outputs, trajectory_points, verbose)
+    data["total_rotation_A"]=total_rotation
+    data["total_energy_E"]=total_energy
+    data["total_operation_time"]=total_operation_time
+    data["total_accuracy"]=total_accuracy
+
+    fitness = -(total_accuracy)#ACCURACY OPTIMAL
+    #fitness = -(total_accuracy+20/200*total_operation_time)#TIME OPTIMAL
+    #fitness = -(total_accuracy+20*total_energy)#ENERGY OPTIMAL
+    #fitness = -(total_accuracy+20*total_rotation)#MINIMUM ROTATION
+    #fitness = -(total_accuracy+5*total_energy+10*total_operation_time+5*total_rotation)#COMBINED CONTROL
+
+    fitnesses["total"].append(-fitness)
+    fitnesses["rotation_A"].append(total_rotation)
+    fitnesses["energy_E"].append(total_energy)
+    fitnesses["operation_T"].append(total_operation_time)
+    fitnesses["accuracy"].append(total_accuracy)
+    if verbose:
+        data["fitness"]=total_accuracy
+        df = pd.DataFrame(dict([ (k,pd.Series(v)) for k,v in data.items() ]))
+        df.to_csv('tableResults_TEST_PAPER.csv', index=False)

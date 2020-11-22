@@ -46,8 +46,8 @@ def eval_genome(genome, config, verbose=False):
     i=0
     for point in trajectory_points:
         output=net.activate(point)# +trajectory_points[(i-1+10)%10])
-        for o in range(0,len(output)):
-            output[o]=output[o]*2*math.pi
+        for j in range(0,len(output)):
+            output[j]=output[j]*2*math.pi
         outputs.append(output)
     if verbose:
         data["outputs"]=outputs
@@ -65,7 +65,12 @@ def eval_genome(genome, config, verbose=False):
         total_operation_time = fitnessFunctions.evaluate_operation_time(outputs)
         total_accuracy = fitnessFunctions.evaluate_position_accuracy(outputs, trajectory_points)
 
-    fitness = -(total_accuracy)#20*+5*total_energy+10*total_operation_time+5*total_rotation)
+    fitness = -(total_accuracy)#ACCURACY OPTIMAL
+    #fitness = -(total_accuracy+20/200*total_operation_time)#TIME OPTIMAL
+    #fitness = -(total_accuracy+20*total_energy)#ENERGY OPTIMAL
+    #fitness = -(total_accuracy+20*total_rotation)#MINIMUM ROTATION
+    #fitness = -(total_accuracy+5*total_energy+10*total_operation_time+5*total_rotation)#COMBINED CONTROL
+
     fitnesses["total"].append(-fitness)
     fitnesses["rotation"].append(total_rotation)
     fitnesses["energy"].append(total_energy)
