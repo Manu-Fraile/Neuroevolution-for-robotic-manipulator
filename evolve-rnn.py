@@ -32,6 +32,9 @@ trajectory_paper = [[2.25, 1.1, 0.25],
                     [0.8, -1.25, -1.35]]
 fitnesses={"total":[],"rotation":[],"energy":[],"time":[],"accuracy":[]}
 
+def getMultiplierForNormalization(_min, _max):
+    return (_max - _min)/1 + (_min)
+
 # Use the RN network phenotype
 def eval_genome(genome, config, verbose=False):
     ###ATTENTION: TO ADD CHECK IF JOINT CAN DO THE ROTATION
@@ -43,12 +46,28 @@ def eval_genome(genome, config, verbose=False):
 
     trajectory_points = trajectory_paper
     outputs = []
+    rescaling_factors=np.array([
+        getMultiplierForNormalization(math.radians(-180), math.radians(180)),
+        getMultiplierForNormalization(math.radians(-70), math.radians(70)),
+        getMultiplierForNormalization(math.radians(-28), math.radians(105)),
+        getMultiplierForNormalization(math.radians(-300), math.radians(300)),
+        getMultiplierForNormalization(math.radians(-120), math.radians(120)),
+        getMultiplierForNormalization(math.radians(-300), math.radians(300))
+    ])
+    #(c) * (z - y) / (1) + y
+
     i=0
     for point in trajectory_points:
         output=net.activate(point)# +trajectory_points[(i-1+10)%10])
-        for j in range(0,len(output)):
-            output[j]=output[j]*2*math.pi
+        # RESCALING
+        output=(np.array(output)*rescaling_factors).tolist()
+
+
+        #for j in range(0,len(output)):
+        #    output[j]=output[j]*2*math.pi
         outputs.append(output)
+        #print(min(outputs))
+        #print(max(outputs))
     if verbose:
         data["outputs"]=outputs
         total_rotation, data["rotation"] = fitnessFunctions.evaluate_rotations(outputs, verbose)
@@ -102,7 +121,7 @@ def run():
     pop.add_reporter(neat.StdOutReporter(True))
 
     ########################################
-    num_generation=200
+    num_generation=2000
     pop_size=250#Remember that is defined in config file
     if 1:
         winner = pop.run(eval_genomes, num_generation)

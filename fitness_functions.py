@@ -38,6 +38,7 @@ class FitnessFunctions(object):
             for joint in range(0, 6):
                 # rotation=|joint_b-joint_a|
                 degrees.append(abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+10)%10][joint]))
+            #maybe there is an error between degree and radiants
             all_data[coo]=max(degrees)*self.energy_constants[degrees.index(max(degrees))]
         total_operation_time=np.sum(all_data)
         if verbose:
@@ -51,7 +52,7 @@ class FitnessFunctions(object):
             for coo in range(0, 10):
                 # rotation=|joint_b-joint_a|
                 all_data[coo]=all_data[coo]+abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+10)%10][joint])
-                print(str(array_of_joints_coordinates[coo][joint])+" - "+ str(array_of_joints_coordinates[(coo-1+10)%10][joint])+" = "+ str(abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+10)%10][joint])))
+                #print(str(array_of_joints_coordinates[coo][joint])+" - "+ str(array_of_joints_coordinates[(coo-1+10)%10][joint])+" = "+ str(abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+10)%10][joint])))
         total_rotations=np.sum(all_data)
         if verbose:
             return total_rotations, all_data
@@ -111,7 +112,7 @@ if __name__ == '__main__':
                             [-0.966, 1.188, 0.215, 0.130, 0.008, -0.617]]
     fitnessFunctions = FitnessFunctions()
     total_accuracy, accuracies = fitnessFunctions.evaluate_position_accuracy(outputs, trajectory_points, True)
-    print(total_accuracy)
+    print("accuracy____" + str(total_accuracy))
     print(accuracies)
 
     fitnesses={"total":[],"rotation_A":[],"energy_E":[],"operation_T":[],"accuracy":[]}
