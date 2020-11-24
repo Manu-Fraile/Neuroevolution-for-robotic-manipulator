@@ -4,6 +4,8 @@ Main algorithm
 
 from __future__ import print_function
 
+import sys
+
 from fitness_functions import FitnessFunctions
 from random import random
 import matplotlib.pyplot as plt
@@ -17,6 +19,7 @@ import numpy as np
 import neat
 import visualize
 
+type="rnn"
 #time_const=1
 
 fitnessFunctions = FitnessFunctions()
@@ -40,8 +43,10 @@ def eval_genome(genome, config, verbose=False):
     ###ATTENTION: TO ADD CHECK IF JOINT CAN DO THE ROTATION
 
     ###ATTENTION: think about that some joint can go from -600 to 600. That means that they can't rotate???
-
-    net = neat.nn.RecurrentNetwork.create(genome, config)
+    if(type=="rnn"):
+        net = neat.nn.RecurrentNetwork.create(genome, config)
+    else:
+        net = neat.nn.FeedForwardNetwork.create(genome, config)
     data={}
 
     trajectory_points = trajectory_paper
@@ -57,8 +62,11 @@ def eval_genome(genome, config, verbose=False):
     #(c) * (z - y) / (1) + y
 
     i=0
-    for point in trajectory_points:
-        output=net.activate(point)# +trajectory_points[(i-1+10)%10])
+    for i in range(0,len(trajectory_points)):
+        if(type=="rnn"):
+            output=net.activate(trajectory_points[i])
+        else:
+            output=net.activate(trajectory_points[i]+trajectory_points[(i-1+10)%10])
         # RESCALING
         output=(np.array(output)*rescaling_factors).tolist()
 
@@ -85,9 +93,9 @@ def eval_genome(genome, config, verbose=False):
         total_accuracy = fitnessFunctions.evaluate_position_accuracy(outputs, trajectory_points)
 
     fitness = -(total_accuracy)#ACCURACY OPTIMAL
-    #fitness = -(total_accuracy+20/200*total_operation_time)#TIME OPTIMAL
+    #fitness = -(total_accuracy+20/100*total_operation_time)#TIME OPTIMAL
     #fitness = -(total_accuracy+20*total_energy)#ENERGY OPTIMAL
-    #fitness = -(total_accuracy+20*total_rotation)#MINIMUM ROTATION
+    #fitness = -(total_accuracy+20/100*total_rotation)#MINIMUM ROTATION
     #fitness = -(total_accuracy+5*total_energy+10*total_operation_time+5*total_rotation)#COMBINED CONTROL
 
     fitnesses["total"].append(-fitness)
@@ -110,7 +118,11 @@ def eval_genomes(genomes, config):
 def run():
     # Load the config file
     local_dir = os.path.dirname(__file__)
-    config_path = os.path.join(local_dir, 'config-ctrnn')
+
+    if(type=="rnn"):
+        config_path = os.path.join(local_dir, 'config-ctrnn')
+    else:
+        config_path = os.path.join(local_dir, 'config-feed')
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
                          config_path)
@@ -204,4 +216,7 @@ def run():
 
 
 if __name__ == '__main__':
+    print(sys.argv)
+    if(len(sys.argv)>1):
+        type=sys.argv[1]
     run()

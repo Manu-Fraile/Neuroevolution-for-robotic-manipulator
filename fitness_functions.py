@@ -21,7 +21,7 @@ class FitnessFunctions(object):
                 angle_in_rad_tmp=abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+10)%10][joint])
                 #if verbose:
                 #    print(tmp)
-                all_data[coo]=all_data[coo]+math.degrees(angle_in_rad_tmp)*self.energy_constants[joint]
+                all_data[coo]=all_data[coo]+angle_in_rad_tmp*self.energy_constants[joint]
         total_energy=np.sum(all_data)
         if verbose:
             return total_energy, all_data
@@ -38,7 +38,7 @@ class FitnessFunctions(object):
                 # rotation=|joint_b-joint_a|
                 angles_in_rad.append(abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+10)%10][joint]))
             #maybe there is an error between degree and radiants
-            all_data[coo]=math.degrees(max(angles_in_rad))*self.velocity_constants[angles_in_rad.index(max(angles_in_rad))]
+            all_data[coo]=math.degrees(max(angles_in_rad))/self.velocity_constants[angles_in_rad.index(max(angles_in_rad))]
         total_operation_time=np.sum(all_data)
         if verbose:
             return total_operation_time, all_data
