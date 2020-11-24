@@ -23,7 +23,7 @@ type="rnn"
 #time_const=1
 
 fitnessFunctions = FitnessFunctions()
-trajectory_paper = [[2.25, 1.1, 0.25],
+trajectory_paper = [[2.25, 1.1, 0.25],#
                     [0.9, 1.5, 0.25],
                     [-0.85, 1.14, 2.22],
                     [-1.8, 1.25, 1.17],
@@ -77,7 +77,9 @@ def eval_genome(genome, config, verbose=False):
         #print(min(outputs))
         #print(max(outputs))
     if verbose:
-        data["outputs"]=outputs
+        np_outputs=np.array(outputs)
+        for i in range(0,6):
+            data["outputs_"+str(i)]=np_outputs[:,i].tolist()
         total_rotation, data["rotation"] = fitnessFunctions.evaluate_rotations(outputs, verbose)
         total_energy, data["energy"] = fitnessFunctions.evaluate_energy(outputs, verbose)
         total_operation_time, data["operation"] = fitnessFunctions.evaluate_operation_time(outputs, verbose)
@@ -133,7 +135,7 @@ def run():
     pop.add_reporter(neat.StdOutReporter(True))
 
     ########################################
-    num_generation=2000
+    num_generation=200
     pop_size=250#Remember that is defined in config file
     if 1:
         winner = pop.run(eval_genomes, num_generation)

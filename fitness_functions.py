@@ -78,11 +78,12 @@ class FitnessFunctions(object):
             y_diff = (points[i][1] - predictedPosition[1])**2
             z_diff = (points[i][2] - predictedPosition[2])**2
             differences = x_diff + y_diff + z_diff
-            all_data.append(sqrt(differences))
+
+            all_data.append(sqrt(differences)[0])
             total_accuracy += all_data[i]
         if verbose:
             return total_accuracy, all_data
-        return total_accuracy[0]
+        return total_accuracy
 
 if __name__ == '__main__':
     import os
