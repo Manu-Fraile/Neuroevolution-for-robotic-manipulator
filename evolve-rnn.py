@@ -163,9 +163,7 @@ def run():
     #print(avg_fitnesses["accuracy"])
     #print(avg_fitnesses)
     #plt.plot([i for i in range(0, len(avg_fitnesses["total"]))], avg_fitnesses["total"], 'b-', label="fitness")
-    plt.plot([i for i in range(0, len(avg_fitnesses["time"]))], avg_fitnesses["time"], 'b-', label="time")
-    plt.plot([i for i in range(0, len(avg_fitnesses["rotation"]))], avg_fitnesses["rotation"], 'r-', label="rotation")
-    plt.plot([i for i in range(0, len(avg_fitnesses["energy"]))], avg_fitnesses["energy"], 'g-', label="energy")
+    plt.plot([i for i in range(0, len(avg_fitnesses["energy"]))], avg_fitnesses["energy"], color="#000000", label="energy", linestyle=':')
     #plt.plot(generation, avg_fitness - stdev_fitness, 'g-.', label="-1 sd")
     #plt.plot(generation, avg_fitness + stdev_fitness, 'g-.', label="+1 sd")
     #plt.plot(generation, best_fitness, 'r-', label="best")
@@ -176,14 +174,16 @@ def run():
     plt.grid()
     plt.legend(loc="best")
 
-    #plt.savefig(filename)
+    plt.savefig("energy.png")
     view=True
     if view:
         plt.show()
         #plt.close()
         fig = None
 
-    plt.plot([i for i in range(0, len(avg_fitnesses["accuracy"]))], avg_fitnesses["accuracy"], label="accuracy")
+    plt.plot([i for i in range(0, len(avg_fitnesses["accuracy"]))], avg_fitnesses["accuracy"], color="#000000", linestyle=":", label="accuracy")
+    plt.plot([i for i in range(0, len(avg_fitnesses["time"]))], avg_fitnesses["time"], color="#000000", linestyle="-", label="time")
+    plt.plot([i for i in range(0, len(avg_fitnesses["rotation"]))], avg_fitnesses["rotation"], color="#000000",linestyle="--", label="rotation")
     #plt.plot(generation, avg_fitness - stdev_fitness, 'g-.', label="-1 sd")
     #plt.plot(generation, avg_fitness + stdev_fitness, 'g-.', label="+1 sd")
     #plt.plot(generation, best_fitness, 'r-', label="best")
@@ -194,7 +194,7 @@ def run():
     plt.grid()
     plt.legend(loc="best")
 
-    #plt.savefig(filename)
+    plt.savefig("accuracy_time_rotation.png")
     view=True
     if view:
         plt.show()
