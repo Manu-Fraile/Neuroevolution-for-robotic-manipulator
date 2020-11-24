@@ -14,15 +14,14 @@ class FitnessFunctions(object):
 
     def evaluate_energy(self, array_of_joints_coordinates, verbose=False):
         total_energy=0
-        degrees_tmp= [0] * 6
         all_data=[0]*10
 
         for coo in range(0, 10):
             for joint in range(0, 6):
-                tmp=abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+10)%10][joint])
+                angle_in_rad_tmp=abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+10)%10][joint])
                 #if verbose:
                 #    print(tmp)
-                all_data[coo]=total_energy+math.degrees(tmp)*self.energy_constants[joint]
+                all_data[coo]=all_data[coo]+math.degrees(angle_in_rad_tmp)*self.energy_constants[joint]
         total_energy=np.sum(all_data)
         if verbose:
             return total_energy, all_data
@@ -30,16 +29,16 @@ class FitnessFunctions(object):
 
     def evaluate_operation_time(self, array_of_joints_coordinates, verbose=False):
         total_operation_time = 0
-        degrees_tmp= [0] * 6
+        angles_in_rad_tmp= [0] * 6
         all_data=[0]*10
 
         for coo in range(0, 10):
-            degrees=[]
+            angles_in_rad=[]
             for joint in range(0, 6):
                 # rotation=|joint_b-joint_a|
-                degrees.append(abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+10)%10][joint]))
+                angles_in_rad.append(abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+10)%10][joint]))
             #maybe there is an error between degree and radiants
-            all_data[coo]=max(degrees)*self.energy_constants[degrees.index(max(degrees))]
+            all_data[coo]=math.degrees(max(angles_in_rad))*self.velocity_constants[angles_in_rad.index(max(angles_in_rad))]
         total_operation_time=np.sum(all_data)
         if verbose:
             return total_operation_time, all_data
