@@ -30,9 +30,9 @@ if __name__ == '__main__':
                                 input_rad.append(math.radians(el))
                             homogenousCoo = directKinematic.evaluate(input_rad)    # This is in homogenous coordinates
 
-                            coo =[[homogenousCoo[0][0] / homogenousCoo[3][0]],
-                                                          [homogenousCoo[1][0] / homogenousCoo[3][0]],
-                                                          [homogenousCoo[2][0] / homogenousCoo[3][0]]]
+                            coo =[homogenousCoo[0][0] / homogenousCoo[3][0],
+                                      homogenousCoo[1][0] / homogenousCoo[3][0],
+                                      homogenousCoo[2][0] / homogenousCoo[3][0]]
                             data.append([input_rad, coo])
 
     print(data[0])
