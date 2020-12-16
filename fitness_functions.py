@@ -13,12 +13,13 @@ class FitnessFunctions(object):
         return
 
     def evaluate_energy(self, array_of_joints_coordinates, verbose=False):
+        trajectory_len=len(array_of_joints_coordinates)
         total_energy=0
-        all_data=[0]*10
+        all_data=[0]*trajectory_len
 
-        for coo in range(0, 10):
+        for coo in range(0, trajectory_len):
             for joint in range(0, 6):
-                angle_in_rad_tmp=abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+10)%10][joint])
+                angle_in_rad_tmp=abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+trajectory_len)%trajectory_len][joint])
                 #if verbose:
                 #    print(tmp)
                 all_data[coo]=all_data[coo]+angle_in_rad_tmp*self.energy_constants[joint]
@@ -28,15 +29,16 @@ class FitnessFunctions(object):
         return total_energy
 
     def evaluate_operation_time(self, array_of_joints_coordinates, verbose=False):
+        trajectory_len=len(array_of_joints_coordinates)
         total_operation_time = 0
         angles_in_rad_tmp= [0] * 6
-        all_data=[0]*10
+        all_data=[0]*trajectory_len
 
-        for coo in range(0, 10):
+        for coo in range(0, trajectory_len):
             angles_in_rad=[]
             for joint in range(0, 6):
                 # rotation=|joint_b-joint_a|
-                angles_in_rad.append(abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+10)%10][joint]))
+                angles_in_rad.append(abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+trajectory_len)%trajectory_len][joint]))
             #maybe there is an error between degree and radiants
             all_data[coo]=math.degrees(max(angles_in_rad))/self.velocity_constants[angles_in_rad.index(max(angles_in_rad))]
         total_operation_time=np.sum(all_data)
@@ -45,19 +47,21 @@ class FitnessFunctions(object):
         return total_operation_time
 
     def evaluate_rotations(self, array_of_joints_coordinates, verbose=False):
+        trajectory_len=len(array_of_joints_coordinates)
         total_rotations = 0
-        all_data=[0]*10
+        all_data=[0]*trajectory_len
         for joint in range(0, 6):
-            for coo in range(0, 10):
+            for coo in range(0, trajectory_len):
                 # rotation=|joint_b-joint_a|
-                all_data[coo]=all_data[coo]+abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+10)%10][joint])
-                #print(str(array_of_joints_coordinates[coo][joint])+" - "+ str(array_of_joints_coordinates[(coo-1+10)%10][joint])+" = "+ str(abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+10)%10][joint])))
+                all_data[coo]=all_data[coo]+abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+trajectory_len)%trajectory_len][joint])
+                #print(str(array_of_joints_coordinates[coo][joint])+" - "+ str(array_of_joints_coordinates[(coo-1+trajectory_len)%trajectory_len][joint])+" = "+ str(abs(array_of_joints_coordinates[coo][joint]-array_of_joints_coordinates[(coo-1+trajectory_len)%trajectory_len][joint])))
         total_rotations=np.sum(all_data)
         if verbose:
             return total_rotations, all_data
         return total_rotations
 
     def evaluate_position_accuracy(self, array_of_joints_coordinates, points, verbose=False):
+        trajectory_len=len(array_of_joints_coordinates)
 
         directKinematics = DirectKinematic()
 
@@ -65,7 +69,7 @@ class FitnessFunctions(object):
 
         all_data=[]
 
-        for i in range(0, 10):
+        for i in range(0, trajectory_len):
 
             homogenousPred = directKinematics.evaluate(array_of_joints_coordinates[i])    # This is in homogenous coordinates
             #homogenousPred = directKinematics.evaluate([0.345,0.720,-0.153, 2.120,0.874,1.620])    # This is in homogenous coordinates

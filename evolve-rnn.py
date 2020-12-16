@@ -7,7 +7,7 @@ from __future__ import print_function
 import sys
 
 from fitness_functions import FitnessFunctions
-from random import random
+from random import random, choice
 import matplotlib.pyplot as plt
 from statistics import mean
 import math
@@ -18,6 +18,11 @@ import numpy as np
 
 import neat
 import visualize
+
+type_optimization="accuracy"
+t=["accuracy", "timeO", "rotationO", "energyO"]
+
+type_optimization=t[3]
 
 type="rnn"
 #time_const=1
@@ -35,11 +40,16 @@ trajectory_paper = [[2.25, 1.1, 0.25],#
                     [0.8, -1.25, -1.35]]
 fitnesses={"total":[],"rotation":[],"energy":[],"time":[],"accuracy":[]}
 
+points=[]
+
+#with open('points.csv', 'rb') as f:
+#        points = pickle.load(f)
+
 def getMultiplierForNormalization(_min, _max):
     return (_max - _min)/1 + (_min)
 
 # Use the RN network phenotype
-def eval_genome(genome, config, verbose=False):
+def eval_genome(genome, config, verbose=False, fixed=True):
     ###ATTENTION: TO ADD CHECK IF JOINT CAN DO THE ROTATION
 
     ###ATTENTION: think about that some joint can go from -600 to 600. That means that they can't rotate???
@@ -49,7 +59,15 @@ def eval_genome(genome, config, verbose=False):
         net = neat.nn.FeedForwardNetwork.create(genome, config)
     data={}
 
-    trajectory_points = trajectory_paper
+    trajectory_points=[]
+
+    if(fixed):
+        trajectory_points = trajectory_paper
+    else:
+        for i in range(0, 20):
+            trajectory_points.append(choice(points)[1])
+        trajectory_points=trajectory_points+trajectory_paper
+
     outputs = []
     rescaling_factors=np.array([
         getMultiplierForNormalization(math.radians(-180), math.radians(180)),
@@ -62,11 +80,13 @@ def eval_genome(genome, config, verbose=False):
     #(c) * (z - y) / (1) + y
 
     i=0
-    for i in range(0,len(trajectory_points)):
+    trajectory_len=len(trajectory_points)
+
+    for i in range(0,trajectory_len):
         if(type=="rnn"):
             output=net.activate(trajectory_points[i])
         else:
-            output=net.activate(trajectory_points[i]+trajectory_points[(i-1+10)%10])
+            output=net.activate(trajectory_points[i]+trajectory_points[(i-1+trajectory_len)%trajectory_len])
         # RESCALING
         output=(np.array(output)*rescaling_factors).tolist()
 
@@ -94,11 +114,16 @@ def eval_genome(genome, config, verbose=False):
         total_operation_time = fitnessFunctions.evaluate_operation_time(outputs)
         total_accuracy = fitnessFunctions.evaluate_position_accuracy(outputs, trajectory_points)
 
-    fitness = -(total_accuracy)#ACCURACY OPTIMAL
-    #fitness = -(total_accuracy+20/100*total_operation_time)#TIME OPTIMAL
-    #fitness = -(total_accuracy+20*total_energy)#ENERGY OPTIMAL
-    #fitness = -(total_accuracy+20/100*total_rotation)#MINIMUM ROTATION
-    #fitness = -(total_accuracy+5*total_energy+10*total_operation_time+5*total_rotation)#COMBINED CONTROL
+    if(type_optimization=="accuracy"):
+        fitness = -(total_accuracy)#ACCURACY OPTIMAL
+    elif(type_optimization=="timeO"):
+        fitness = -(total_accuracy+20/150*total_operation_time)#TIME OPTIMAL
+    elif(type_optimization=="rotationO"):
+        fitness = -(total_accuracy+20/4000*total_rotation)#MINIMUM ROTATION
+    elif(type_optimization=="energyO"):
+        fitness = -(total_accuracy+20/20000*total_energy)#ENERGY OPTIMAL
+    else:
+        fitness = -(total_accuracy+5*total_energy+10*total_operation_time+5*total_rotation)#COMBINED CONTROL
 
     fitnesses["total"].append(-fitness)
     fitnesses["rotation"].append(total_rotation)
@@ -106,9 +131,9 @@ def eval_genome(genome, config, verbose=False):
     fitnesses["time"].append(total_operation_time)
     fitnesses["accuracy"].append(total_accuracy)
     if verbose:
-        data["fitness"]=total_accuracy
+        data["fitness"]=fitness
         df = pd.DataFrame(dict([ (k,pd.Series(v)) for k,v in data.items() ]))
-        df.to_csv('tableResults.csv', index=False)
+        df.to_csv('tableResults_'+type_optimization+'.csv', index=False)
     return fitness
 
 
@@ -118,6 +143,7 @@ def eval_genomes(genomes, config):
 
 
 def run():
+
     # Load the config file
     local_dir = os.path.dirname(__file__)
 
@@ -135,7 +161,7 @@ def run():
     pop.add_reporter(neat.StdOutReporter(True))
 
     ########################################
-    num_generation=200
+    num_generation=600
     pop_size=250#Remember that is defined in config file
     if 1:
         winner = pop.run(eval_genomes, num_generation)
@@ -147,11 +173,13 @@ def run():
     with open('results/winner-rnn', 'wb') as f:
         pickle.dump(winner, f)
 
-    eval_genome(winner, config, True)
+    eval_genome(winner, config, True, True)
     print(stats);
 
 
     #plt.figure("NEAT (Population's average/std. dev and best fitness)")
+    #plt.rcParams["figure.figsize"] = [6,4]
+    plt.rcParams.update({'font.size': 15})
     plt.figure("NEAT fitnesses")# (Population's average/std. dev and best fitness)")
     avg_fitnesses={"total":[],"rotation":[],"energy":[],"time":[],"accuracy":[]}
     for i in range(0, num_generation):
@@ -163,7 +191,29 @@ def run():
     #print(avg_fitnesses["accuracy"])
     #print(avg_fitnesses)
     #plt.plot([i for i in range(0, len(avg_fitnesses["total"]))], avg_fitnesses["total"], 'b-', label="fitness")
-    plt.plot([i for i in range(0, len(avg_fitnesses["energy"]))], avg_fitnesses["energy"], color="#000000", label="energy", linestyle=':')
+    plt.plot([i for i in range(0, len(avg_fitnesses["energy"]))], avg_fitnesses["energy"], color="#000000", label="energy", linestyle='-')
+    #plt.plot(generation, avg_fitness - stdev_fitness, 'g-.', label="-1 sd")
+    #plt.plot(generation, avg_fitness + stdev_fitness, 'g-.', label="+1 sd")
+    #plt.plot(generation, best_fitness, 'r-', label="best")
+
+    #plt.title("Population's average/std. dev and best fitness")
+    plt.xlabel("Generations")
+    plt.ylabel("Fitness", labelpad=0)
+    plt.grid()
+    plt.legend(loc="best")
+
+
+
+    plt.savefig("energy_"+type_optimization+".png")
+    view=True
+    if view:
+        plt.show()
+        #plt.close()
+        fig = None
+
+    plt.plot([i for i in range(0, len(avg_fitnesses["accuracy"]))], avg_fitnesses["accuracy"], color="#808080", linestyle="-", label="accuracy",lw=0.9)
+    plt.plot([i for i in range(0, len(avg_fitnesses["time"]))], avg_fitnesses["time"], color="#D3D3D3", linestyle="-", label="time",lw=0.9)
+    plt.plot([i for i in range(0, len(avg_fitnesses["rotation"]))], avg_fitnesses["rotation"], color="#000000",linestyle="-", label="rotation",lw=0.9)
     #plt.plot(generation, avg_fitness - stdev_fitness, 'g-.', label="-1 sd")
     #plt.plot(generation, avg_fitness + stdev_fitness, 'g-.', label="+1 sd")
     #plt.plot(generation, best_fitness, 'r-', label="best")
@@ -174,27 +224,7 @@ def run():
     plt.grid()
     plt.legend(loc="best")
 
-    plt.savefig("energy.png")
-    view=True
-    if view:
-        plt.show()
-        #plt.close()
-        fig = None
-
-    plt.plot([i for i in range(0, len(avg_fitnesses["accuracy"]))], avg_fitnesses["accuracy"], color="#000000", linestyle=":", label="accuracy")
-    plt.plot([i for i in range(0, len(avg_fitnesses["time"]))], avg_fitnesses["time"], color="#000000", linestyle="-", label="time")
-    plt.plot([i for i in range(0, len(avg_fitnesses["rotation"]))], avg_fitnesses["rotation"], color="#000000",linestyle="--", label="rotation")
-    #plt.plot(generation, avg_fitness - stdev_fitness, 'g-.', label="-1 sd")
-    #plt.plot(generation, avg_fitness + stdev_fitness, 'g-.', label="+1 sd")
-    #plt.plot(generation, best_fitness, 'r-', label="best")
-
-    #plt.title("Population's average/std. dev and best fitness")
-    plt.xlabel("Generations")
-    plt.ylabel("Fitness")
-    plt.grid()
-    plt.legend(loc="best")
-
-    plt.savefig("accuracy_time_rotation.png")
+    plt.savefig("accuracy_time_rotation_"+type_optimization+".png")
     view=True
     if view:
         plt.show()
@@ -202,12 +232,12 @@ def run():
         fig = None
 
 
-    if(0):
+    if(1):
 
         visualize.plot_stats(stats, ylog=True, view=False, filename="results/rnn-fitness.svg")
         visualize.plot_species(stats, view=False, filename="results/rnn-speciation.svg")
 
-        node_names = {-1: 'x', -2: 'dx', -3: 'theta', -4: 'dtheta', 0: 'control'}
+        node_names = {0: 'omega', 1: 'theta', 2: 'psi', 3: 'fi', 4: 'ro', 5: 'epsilon', -3: 'x', -2: 'y', -1: 'z'}
 
         visualize.draw_net(config, winner, view=False, node_names=node_names,
                            filename="results/winner-rnn.gv")
