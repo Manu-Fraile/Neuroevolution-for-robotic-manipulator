@@ -68,7 +68,7 @@ class FitnessFunctions(object):
         total_accuracy = 0
 
         all_data=[]
-
+        
         for i in range(0, trajectory_len):
 
             homogenousPred = directKinematics.evaluate(array_of_joints_coordinates[i])    # This is in homogenous coordinates

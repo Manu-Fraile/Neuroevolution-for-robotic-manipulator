@@ -5,23 +5,23 @@
 [NEAT]
 fitness_criterion     = max
 fitness_threshold     = 100000
-pop_size              = 250
-reset_on_extinction   = 0
+pop_size              = 200
+reset_on_extinction   = True
 
 [DefaultGenome]
-num_inputs              = 6
-num_hidden              = 2
+num_inputs              = 3
+num_hidden              = 3
 num_outputs             = 6
-initial_connection      = partial_direct 0.5
+initial_connection      = partial_direct 0.99
 feed_forward            = True
 compatibility_disjoint_coefficient = 1.0
 compatibility_weight_coefficient   = 0.6
-conn_add_prob           = 0.2
+conn_add_prob           = 0.1
 conn_delete_prob        = 0.1
-node_add_prob           = 0.2
+node_add_prob           = 0.1
 node_delete_prob        = 0.1
 activation_default      = sigmoid
-activation_options      = sigmoid
+activation_options      = sigmoid clamped
 activation_mutate_rate  = 0.1
 aggregation_default     = sum
 aggregation_options     = sum
@@ -56,8 +56,8 @@ compatibility_threshold = 3.0
 
 [DefaultStagnation]
 species_fitness_func = max
-max_stagnation  = 50
+max_stagnation  = 70
 
 [DefaultReproduction]
-elitism            = 2
+elitism            = 10
 survival_threshold = 0.2

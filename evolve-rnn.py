@@ -19,14 +19,19 @@ import numpy as np
 import neat
 import visualize
 
+#################### PARAMETERS   ####################
 type_optimization="accuracy"
 t=["accuracy", "timeO", "rotationO", "energyO"]
+type_optimization=t[0]
 
-type_optimization=t[3]
+USE_FIXED_TRAJECTORY=True
+N_POINTS_TRAJECTORY_TRAINING=30 #Number of point for evaluate the quality of each network during training
+num_generation=600
+pop_size=200 #Remember that is defined in config file
 
-type="rnn"
-#time_const=1
+type="rnn"  #rnn or feed
 
+#################### PARAMETERS   ####################
 fitnessFunctions = FitnessFunctions()
 trajectory_paper = [[2.25, 1.1, 0.25],#
                     [0.9, 1.5, 0.25],
@@ -42,31 +47,34 @@ fitnesses={"total":[],"rotation":[],"energy":[],"time":[],"accuracy":[]}
 
 points=[]
 
-#with open('points.csv', 'rb') as f:
-#        points = pickle.load(f)
+if(USE_FIXED_TRAJECTORY==False):
+    with open('points.csv', 'rb') as f:
+        points = pickle.load(f)
 
 def getMultiplierForNormalization(_min, _max):
     return (_max - _min)/1 + (_min)
 
 # Use the RN network phenotype
-def eval_genome(genome, config, verbose=False, fixed=True):
-    ###ATTENTION: TO ADD CHECK IF JOINT CAN DO THE ROTATION
+def eval_genome(genome, config, verbose=False, fixed=-1, points_to_use=[]):
 
-    ###ATTENTION: think about that some joint can go from -600 to 600. That means that they can't rotate???
     if(type=="rnn"):
         net = neat.nn.RecurrentNetwork.create(genome, config)
     else:
         net = neat.nn.FeedForwardNetwork.create(genome, config)
     data={}
 
+    fixed_data=USE_FIXED_TRAJECTORY
+    if(fixed>-1):
+        fixed_data=fixed==0 #fixed==0 used fix trajectory, any other number use the not fixed
+
     trajectory_points=[]
 
-    if(fixed):
+    if(fixed_data):
         trajectory_points = trajectory_paper
     else:
-        for i in range(0, 20):
-            trajectory_points.append(choice(points)[1])
-        trajectory_points=trajectory_points+trajectory_paper
+        trajectory_points = points_to_use
+
+        #trajectory_points=trajectory_points+trajectory_paper
 
     outputs = []
     rescaling_factors=np.array([
@@ -77,25 +85,20 @@ def eval_genome(genome, config, verbose=False, fixed=True):
         getMultiplierForNormalization(math.radians(-120), math.radians(120)),
         getMultiplierForNormalization(math.radians(-300), math.radians(300))
     ])
-    #(c) * (z - y) / (1) + y
 
-    i=0
     trajectory_len=len(trajectory_points)
 
     for i in range(0,trajectory_len):
         if(type=="rnn"):
             output=net.activate(trajectory_points[i])
         else:
-            output=net.activate(trajectory_points[i]+trajectory_points[(i-1+trajectory_len)%trajectory_len])
+            #output=net.activate(trajectory_points[i]+trajectory_points[(i-1+trajectory_len)%trajectory_len])
+            output=net.activate(trajectory_points[i])
+
         # RESCALING
         output=(np.array(output)*rescaling_factors).tolist()
-
-
-        #for j in range(0,len(output)):
-        #    output[j]=output[j]*2*math.pi
         outputs.append(output)
-        #print(min(outputs))
-        #print(max(outputs))
+
     if verbose:
         np_outputs=np.array(outputs)
         for i in range(0,6):
@@ -133,13 +136,17 @@ def eval_genome(genome, config, verbose=False, fixed=True):
     if verbose:
         data["fitness"]=fitness
         df = pd.DataFrame(dict([ (k,pd.Series(v)) for k,v in data.items() ]))
-        df.to_csv('tableResults_'+type_optimization+'.csv', index=False)
+        df.to_csv('./result_algorithm/tableResults_'+type_optimization+'.csv', index=False)
     return fitness
 
 
 def eval_genomes(genomes, config):
+    points_to_use=[]
+    if(USE_FIXED_TRAJECTORY==False):
+        for i in range(0, N_POINTS_TRAJECTORY_TRAINING):
+            points_to_use.append(choice(points)[1])
     for genome_id, genome in genomes:
-        genome.fitness = eval_genome(genome, config)
+        genome.fitness = eval_genome(genome, config, points_to_use=points_to_use)
 
 
 def run():
@@ -151,6 +158,7 @@ def run():
         config_path = os.path.join(local_dir, 'config-ctrnn')
     else:
         config_path = os.path.join(local_dir, 'config-feed')
+
     config = neat.Config(neat.DefaultGenome, neat.DefaultReproduction,
                          neat.DefaultSpeciesSet, neat.DefaultStagnation,
                          config_path)
@@ -160,9 +168,6 @@ def run():
     pop.add_reporter(stats)
     pop.add_reporter(neat.StdOutReporter(True))
 
-    ########################################
-    num_generation=600
-    pop_size=250#Remember that is defined in config file
     if 1:
         winner = pop.run(eval_genomes, num_generation)
     else:
@@ -173,7 +178,7 @@ def run():
     with open('results/winner-rnn', 'wb') as f:
         pickle.dump(winner, f)
 
-    eval_genome(winner, config, True, True)
+    eval_genome(winner, config, True, fixed=0)
     print(stats);
 
 
@@ -214,11 +219,7 @@ def run():
     plt.plot([i for i in range(0, len(avg_fitnesses["accuracy"]))], avg_fitnesses["accuracy"], color="#808080", linestyle="-", label="accuracy",lw=0.9)
     plt.plot([i for i in range(0, len(avg_fitnesses["time"]))], avg_fitnesses["time"], color="#D3D3D3", linestyle="-", label="time",lw=0.9)
     plt.plot([i for i in range(0, len(avg_fitnesses["rotation"]))], avg_fitnesses["rotation"], color="#000000",linestyle="-", label="rotation",lw=0.9)
-    #plt.plot(generation, avg_fitness - stdev_fitness, 'g-.', label="-1 sd")
-    #plt.plot(generation, avg_fitness + stdev_fitness, 'g-.', label="+1 sd")
-    #plt.plot(generation, best_fitness, 'r-', label="best")
 
-    #plt.title("Population's average/std. dev and best fitness")
     plt.xlabel("Generations")
     plt.ylabel("Fitness")
     plt.grid()
@@ -228,12 +229,10 @@ def run():
     view=True
     if view:
         plt.show()
-        #plt.close()
         fig = None
 
 
     if(1):
-
         visualize.plot_stats(stats, ylog=True, view=False, filename="results/rnn-fitness.svg")
         visualize.plot_species(stats, view=False, filename="results/rnn-speciation.svg")
 
@@ -251,4 +250,5 @@ if __name__ == '__main__':
     print(sys.argv)
     if(len(sys.argv)>1):
         type=sys.argv[1]
+    print(type)
     run()
