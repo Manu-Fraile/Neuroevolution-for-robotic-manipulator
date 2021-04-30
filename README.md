@@ -1,5 +1,7 @@
-# Il2202---RMaSW
-A high performance Neurevolution algorithm for robotic manipulator control
+# A high performance Neurevolution algorithm for robotic manipulator control
+This repository contains the work developed by Simone Morettini and Manuel Fraile on the course: Il2202 - Research Methodology and Scientific Writing.
+
+The aim of this course is to produce a research paper as a training or previous step for the Master's Thesis. In our case, we decide to develop a novel technique for controlling a robotic manipulator.
 
 
 ## Setup
